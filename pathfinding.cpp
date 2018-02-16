@@ -7,14 +7,15 @@
 #include <memory.h>
 #include <vector>
 #include <deque>
+#include <memory>
 
 
 
 
 struct Cell
 {
-	Cell(int x, int y, int score, int walked, Cell* previous) {
-		this->x = x; this->y = y; this->score = score; this->totalwalked = walked; this->previous = previous;
+	Cell(int x, int y, int score, int walked, std::shared_ptr<Cell> previous) {
+		this->x = x; this->y = y; this->score = score; this->totalwalked = walked; /*this->previous = previous*/;
 	}
 	Cell() {};
 	int x = 0;
@@ -22,7 +23,7 @@ struct Cell
 	int score = 999999;
 	int totalwalked = 0;
 	
-	Cell* previous;
+	//std::shared_ptr<Cell> previous;
 };
 
 int DistanceScore(Cell a, Cell end);
@@ -50,7 +51,6 @@ Cell BestScore(std::deque<Cell> *list)
 
 Cell end;
 bool found = false;
-Cell last;
 void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* outputData, int startX, int startY, int endX, int endY)
 {
 	if(once)
@@ -60,23 +60,20 @@ void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* out
 		end.y = endY;
 		Cell tmp;
 		tmp.x = startX; tmp.y = startY; tmp.totalwalked = 0; tmp.score = DistanceScore(tmp,end);
-		Cell* tmpprev = new Cell();
-		tmpprev->score = 0;
-		tmp.previous = tmpprev;
 		OpenList.push_back(tmp);
 	}
 
 	if (found)
 	{
-		while (last.previous->score != 0)
-		{
-			last = *last.previous;
-			uint8_t* pix = &outputData[3 * ((last.y)*width + (last.x))]; // get pixel
-																					   //std::cout << "CurrentX: " << currentx << " CurrentY: " << currenty << std::endl;
-			pix[0] = 0;
-			pix[1] = 0;
-			pix[2] = 255;
-		}
+		//while (last->previous->score != 0)
+		//{
+		//	last = last->previous;
+		//	uint8_t* pix = &outputData[3 * ((last->y)*width + (last->x))]; // get pixel
+		//																			   //std::cout << "CurrentX: " << currentx << " CurrentY: " << currenty << std::endl;
+		//	pix[0] = 0;
+		//	pix[1] = 0;
+		//	pix[2] = 255;
+		//}
 	}
 	if (!found)
 	{
@@ -99,7 +96,7 @@ void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* out
 				{
 					std::cout << "voitit pelin";
 					found = true;
-					last = current;
+					//last = std::shared_ptr<Cell>(new Cell(current));
 				}
 				if (r == 255 && g == 255 && b == 255)
 				{
@@ -118,7 +115,7 @@ void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* out
 					int totalscore = distancescore + movementcost;
 
 					best.score = totalscore; best.totalwalked = movementcost;
-					best.previous = new Cell(current.x, current.y, current.score, current.totalwalked, current.previous);
+					//best.previous = (current.x, current.y, current.score, current.totalwalked, current.previous);
 
 					if (!OpenList.empty())
 					{
