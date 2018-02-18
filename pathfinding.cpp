@@ -8,25 +8,34 @@
 #include <vector>
 #include <deque>
 #include <memory>
+#include <algorithm>
 
 
+struct vec2
+{
+	vec2(int x, int y) { this->x = x; this->y = y; }
+	int x;
+	int y;
+};
 
+float D1 = 1;
+float D2 = 1.4f;
 
 struct Cell
 {
-	Cell(int x, int y, int score, int walked, std::shared_ptr<Cell> previous) {
+	Cell(int x, int y, float score, float walked, std::shared_ptr<Cell> previous) {
 		this->x = x; this->y = y; this->score = score; this->totalwalked = walked; /*this->previous = previous*/;
 	}
 	Cell() {};
 	int x = 0;
 	int y = 0;
-	int score = 999999;
-	int totalwalked = 0;
+	float score = 999999;
+	float totalwalked = 0;
 	
-	//std::shared_ptr<Cell> previous;
+	std::vector<vec2> Previous;
 };
 
-int DistanceScore(Cell a, Cell end);
+float DistanceScore(Cell a, Cell end);
 // STUDENT_TODO: Make implementation for doPathFinding function, which writes found path to outputData
 bool once = true;
 std::deque<Cell> OpenList;
@@ -36,7 +45,7 @@ Cell BestScore(std::deque<Cell> *list)
 {
 	Cell best;
 	best.score = 999999999;
-	int last;
+	float last;
 	for(int i = 0; i < list->size(); i++)
 	{
 		if (list->at(i).score < best.score)
@@ -51,6 +60,7 @@ Cell BestScore(std::deque<Cell> *list)
 
 Cell end;
 bool found = false;
+Cell lastcell;
 void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* outputData, int startX, int startY, int endX, int endY)
 {
 	if(once)
@@ -65,15 +75,14 @@ void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* out
 
 	if (found)
 	{
-		//while (last->previous->score != 0)
-		//{
-		//	last = last->previous;
-		//	uint8_t* pix = &outputData[3 * ((last->y)*width + (last->x))]; // get pixel
-		//																			   //std::cout << "CurrentX: " << currentx << " CurrentY: " << currenty << std::endl;
-		//	pix[0] = 0;
-		//	pix[1] = 0;
-		//	pix[2] = 255;
-		//}
+		std::cout << "Size: " << lastcell.Previous.size() << std::endl;
+		for(vec2 coord : lastcell.Previous)
+		{
+			uint8_t* pix = &outputData[3 * ((coord.y)*width + (coord.x))]; // get pixel
+			pix[0] = 0;
+			pix[1] = 0;
+			pix[2] = 255;
+		}
 	}
 	if (!found)
 	{
@@ -96,26 +105,28 @@ void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* out
 				{
 					std::cout << "voitit pelin";
 					found = true;
-					//last = std::shared_ptr<Cell>(new Cell(current));
+					lastcell = current;
+					break;
 				}
 				if (r == 255 && g == 255 && b == 255)
 				{
 					Cell best;
-
 					//Distance calc
 					best.x = current.x + x;
 					best.y = current.y + y;
-					int distancescore = DistanceScore(best, end);
+					float distancescore = DistanceScore(best, end);
 
 					//walked Calc
-					int movementcost = 0;
-					if (x != 0 && y != 0) { movementcost = 14 + current.totalwalked; }
-					else if (x != 0 || y != 0) { movementcost = 10 + current.totalwalked; }
+					float movementcost = 0;
+					if (x != 0 && y != 0) { movementcost = 1.4f + current.totalwalked; }
+					else if (x != 0 || y != 0) { movementcost = 1 + current.totalwalked; }
 
-					int totalscore = distancescore + movementcost;
+					float totalscore = distancescore + movementcost;
 
 					best.score = totalscore; best.totalwalked = movementcost;
-					//best.previous = (current.x, current.y, current.score, current.totalwalked, current.previous);
+					best.Previous = current.Previous;
+					best.Previous.push_back(vec2(current.x, current.y));
+					std::cout << "X: " << best.x << " Y: " << best.y << " Walked: " << best.totalwalked << " DistanceScore: " << distancescore << " With score: " << best.score << std::endl;
 
 					if (!OpenList.empty())
 					{
@@ -150,10 +161,14 @@ void doPathFinding(const uint8_t* inputData, int width, int height, uint8_t* out
 	}
 }
 
-int DistanceScore(Cell a, Cell end)
+float DistanceScore(Cell a, Cell end)
 {
-	int multi = 1000;
-	return (std::abs(a.x - end.x) + std::abs(a.y - end.y))*multi;
+	float dx = std::abs(a.x - end.x);
+	float dy = std::abs(a.y - end.y);
+	float returnvalue = D1 * (dx + dy) + (D2 - 2 * D1) * std::min(dx, dy);
+	return returnvalue * 1;
+	//int multi = 10;
+	//return (std::abs(a.x - end.x) + std::abs(a.y - end.y))*multi;
 }
 
 namespace
